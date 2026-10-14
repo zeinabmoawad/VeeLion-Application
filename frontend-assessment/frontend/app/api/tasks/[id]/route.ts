@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { errorResponse, handleRouteError } from "@/lib/apiResponse";
 import { updateTaskInBackend } from "@/lib/backendApi";
 
 type RouteParams = {
@@ -8,22 +9,24 @@ type RouteParams = {
 };
 
 export async function PATCH(request: Request, { params }: RouteParams) {
+  let payload: unknown;
+
   try {
-    const payload = (await request.json()) as { completed?: boolean };
+    payload = await request.json();
+  } catch {
+    return errorResponse("Request body must be valid JSON.", 400);
+  }
 
-    if (typeof payload.completed !== "boolean") {
-      return NextResponse.json(
-        { error: { message: "completed must be boolean" } },
-        { status: 400 }
-      );
-    }
+  const completed = (payload as { completed?: unknown } | null)?.completed;
 
-    const task = await updateTaskInBackend(params.id, payload.completed);
+  if (typeof completed !== "boolean") {
+    return errorResponse("completed must be boolean", 400);
+  }
+
+  try {
+    const task = await updateTaskInBackend(params.id, completed);
     return NextResponse.json({ data: task }, { status: 200 });
   } catch (error) {
-    return NextResponse.json(
-      { error: { message: error instanceof Error ? error.message : "Unable to update task." } },
-      { status: 500 }
-    );
+    return handleRouteError(error, "Unable to update task.");
   }
 }

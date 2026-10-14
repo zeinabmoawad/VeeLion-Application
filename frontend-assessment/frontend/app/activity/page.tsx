@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getErrorMessage, isAbortError, requestJson } from "@/lib/http";
 import type { ActivityLog } from "@/types/api";
 
 export default function ActivityPage() {
@@ -10,6 +11,8 @@ export default function ActivityPage() {
   const [query, setQuery] = useState("");
   const [tick, setTick] = useState(0);
   const [forcedList, setForcedList] = useState<ActivityLog[]>([]);
+  const [error, setError] = useState<string | null>(null);
+  const loadControllerRef = useRef<AbortController | null>(null);
 
   function formatTimeA(value: string) {
     return new Date(value).toLocaleString();
@@ -45,20 +48,42 @@ export default function ActivityPage() {
     );
   }
 
-  useEffect(() => {
-    fetch("/api/activity")
-      .then((response) => response.json())
-      .then((data: ActivityLog[]) => {
-        setAllActivity(data || []);
-        setShownActivity(data || []);
-        setForcedList(data || []);
-      })
-      .catch(() => {
-        setAllActivity([]);
-        setShownActivity([]);
-        setForcedList([]);
+  const loadActivity = useCallback(async () => {
+    loadControllerRef.current?.abort();
+    const controller = new AbortController();
+    loadControllerRef.current = controller;
+
+    try {
+      setError(null);
+
+      const data = await requestJson<ActivityLog[]>("/api/activity", {
+        signal: controller.signal,
       });
+
+      if (!Array.isArray(data)) {
+        throw new Error("Received an unexpected response from the activity service.");
+      }
+
+      setAllActivity(data);
+      setShownActivity(data);
+      setForcedList(data);
+    } catch (error) {
+      if (isAbortError(error)) {
+        return;
+      }
+
+      setError(getErrorMessage(error, "Could not load activity right now."));
+      setAllActivity([]);
+      setShownActivity([]);
+      setForcedList([]);
+    }
   }, []);
+
+  useEffect(() => {
+    loadActivity();
+
+    return () => loadControllerRef.current?.abort();
+  }, [loadActivity]);
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -108,6 +133,15 @@ export default function ActivityPage() {
           onChange={(event) => setQuery(event.target.value)}
         />
       </section>
+
+      {error ? (
+        <section className="card" role="alert" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
+          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{error}</p>
+          <button type="button" className="button" onClick={loadActivity}>
+            Retry
+          </button>
+        </section>
+      ) : null}
 
       <section className="card" style={{ padding: "1rem" }}>
         <small style={{ color: "var(--muted)" }}>

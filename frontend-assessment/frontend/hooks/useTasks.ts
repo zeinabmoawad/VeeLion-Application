@@ -1,67 +1,53 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ErrorResponse, Task, TaskFilter, TaskResponse, TasksResponse } from "@/types/api";
-
-function getErrorMessage(error: unknown, fallback: string): string {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return fallback;
-}
-
-async function requestJson<T>(url: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(url, {
-    ...init,
-    headers: {
-      "Content-Type": "application/json",
-      ...(init?.headers || {}),
-    },
-  });
-
-  if (!response.ok) {
-    try {
-      const body = (await response.json()) as ErrorResponse;
-      throw new Error(body.error?.message || `Request failed with ${response.status}`);
-    } catch (error) {
-      throw new Error(getErrorMessage(error, `Request failed with ${response.status}`));
-    }
-  }
-
-  return (await response.json()) as T;
-}
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getErrorMessage, isAbortError, requestJson } from "@/lib/http";
+import type { Task, TaskFilter, TaskResponse, TasksResponse } from "@/types/api";
 
 export function useTasks() {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string>("");
-  const [updatingTaskId, setUpdatingTaskId] = useState<string>("");
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [updateError, setUpdateError] = useState<string | null>(null);
+  const [pendingTaskIds, setPendingTaskIds] = useState<ReadonlySet<string>>(() => new Set());
+  const loadControllerRef = useRef<AbortController | null>(null);
 
   const fetchTasks = useCallback(async () => {
+    // Cancel any in-flight load so an older response can't overwrite a newer one.
+    loadControllerRef.current?.abort();
+    const controller = new AbortController();
+    loadControllerRef.current = controller;
+
     try {
       setLoading(true);
-      setError("");
+      setLoadError(null);
 
       const body = await requestJson<TasksResponse>("/api/tasks", {
         method: "GET",
+        signal: controller.signal,
       });
 
       setTasks(body.data);
     } catch (error) {
-      setError(getErrorMessage(error, "Could not load tasks right now."));
+      if (isAbortError(error)) {
+        return;
+      }
+
+      setLoadError(getErrorMessage(error, "Could not load tasks right now."));
     } finally {
-      setLoading(false);
+      if (loadControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   }, []);
 
   const updateTaskStatus = useCallback(async (taskId: string, completed: boolean) => {
-    try {
-      setUpdatingTaskId(taskId);
-      setError("");
+    setPendingTaskIds((previous) => new Set(previous).add(taskId));
+    setUpdateError(null);
 
-      const body = await requestJson<TaskResponse>(`/api/tasks/${taskId}`, {
+    try {
+      const body = await requestJson<TaskResponse>(`/api/tasks/${encodeURIComponent(taskId)}`, {
         method: "PATCH",
         body: JSON.stringify({ completed }),
       });
@@ -70,14 +56,22 @@ export function useTasks() {
         previous.map((task) => (task.id === taskId ? body.data : task))
       );
     } catch (error) {
-      setError(getErrorMessage(error, "Could not update task status."));
+      setUpdateError(getErrorMessage(error, "Could not update task status."));
     } finally {
-      setUpdatingTaskId("");
+      setPendingTaskIds((previous) => {
+        const next = new Set(previous);
+        next.delete(taskId);
+        return next;
+      });
     }
   }, []);
 
+  const dismissUpdateError = useCallback(() => setUpdateError(null), []);
+
   useEffect(() => {
     fetchTasks();
+
+    return () => loadControllerRef.current?.abort();
   }, [fetchTasks]);
 
   const filteredTasks = useMemo(() => {
@@ -97,10 +91,12 @@ export function useTasks() {
     filteredTasks,
     filter,
     loading,
-    error,
-    updatingTaskId,
+    loadError,
+    updateError,
+    pendingTaskIds,
     setFilter,
     fetchTasks,
     updateTaskStatus,
+    dismissUpdateError,
   };
 }
