@@ -1,4 +1,5 @@
 import { memo } from "react";
+import { formatDateTime } from "@/lib/format";
 import type { Task } from "@/types/api";
 
 type TaskItemProps = {
@@ -24,7 +25,7 @@ export const TaskItem = memo(function TaskItem({ task, busy, onToggle }: TaskIte
       </div>
 
       <small style={{ color: "var(--muted)" }}>
-        Updated: {new Date(task.updatedAt).toLocaleString()}
+        Updated: <time dateTime={task.updatedAt}>{formatDateTime(task.updatedAt)}</time>
       </small>
 
       <div>
