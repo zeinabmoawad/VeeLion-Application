@@ -1,3 +1,4 @@
+import { memo } from "react";
 import type { Task } from "@/types/api";
 
 type TaskItemProps = {
@@ -6,7 +7,8 @@ type TaskItemProps = {
   onToggle: (task: Task) => void;
 };
 
-export function TaskItem({ task, busy, onToggle }: TaskItemProps) {
+// Memoised so toggling one task only re-renders that row (props are stable otherwise).
+export const TaskItem = memo(function TaskItem({ task, busy, onToggle }: TaskItemProps) {
   return (
     <li
       className="card"
@@ -38,4 +40,4 @@ export function TaskItem({ task, busy, onToggle }: TaskItemProps) {
       </div>
     </li>
   );
-}
+});

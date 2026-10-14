@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import type { Task } from "@/types/api";
 import { StatusFilter } from "@/components/tasks/StatusFilter";
@@ -7,6 +8,7 @@ import { TaskList } from "@/components/tasks/TaskList";
 
 export function TaskDashboard() {
   const {
+    tasks,
     filteredTasks,
     filter,
     loading,
@@ -19,19 +21,31 @@ export function TaskDashboard() {
     dismissUpdateError,
   } = useTasks();
 
-  const handleToggle = (task: Task) => {
-    updateTaskStatus(task.id, !task.completed);
-  };
+  const handleToggle = useCallback(
+    (task: Task) => {
+      updateTaskStatus(task.id, !task.completed);
+    },
+    [updateTaskStatus]
+  );
+
+  // Only the first load blocks the list; refetches keep it mounted to avoid flicker.
+  const initialLoading = loading && tasks.length === 0;
+  const refreshing = loading && tasks.length > 0;
 
   return (
     <section className="stack">
       <header className="card" style={{ padding: "1rem" }}>
         <h1 style={{ marginTop: 0, marginBottom: "0.5rem" }}>Task Dashboard</h1>
+        {refreshing ? (
+          <small role="status" style={{ color: "var(--muted)" }}>
+            Refreshing...
+          </small>
+        ) : null}
       </header>
 
       <StatusFilter value={filter} onChange={setFilter} />
 
-      {loading ? (
+      {initialLoading ? (
         <section className="card" style={{ padding: "1rem" }}>
           <p style={{ margin: 0 }}>Loading tasks...</p>
         </section>
@@ -67,7 +81,7 @@ export function TaskDashboard() {
         </section>
       ) : null}
 
-      {!loading && !loadError ? (
+      {!initialLoading && !loadError ? (
         <TaskList tasks={filteredTasks} pendingTaskIds={pendingTaskIds} onToggle={handleToggle} />
       ) : null}
     </section>
