@@ -1,3 +1,4 @@
+import { Badge, Segmented, theme } from "antd";
 import type { TaskCounts } from "@/lib/tasks";
 import type { TaskFilter } from "@/types/api";
 
@@ -14,25 +15,27 @@ type StatusFilterProps = {
 };
 
 export function StatusFilter({ value, counts, onChange }: StatusFilterProps) {
-  return (
-    <section aria-label="Filter tasks by status" className="card" style={{ padding: "0.8rem" }}>
-      <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
-        {FILTERS.map((filter) => {
-          const active = filter.value === value;
+  const { token } = theme.useToken();
 
-          return (
-            <button
-              key={filter.value}
-              type="button"
-              className={active ? "button primary" : "button"}
-              onClick={() => onChange(filter.value)}
-              aria-pressed={active}
-            >
-              {filter.label} ({counts[filter.value]})
-            </button>
-          );
-        })}
-      </div>
-    </section>
+  return (
+    <Segmented<TaskFilter>
+      aria-label="Filter tasks by status"
+      value={value}
+      onChange={onChange}
+      options={FILTERS.map((filter) => ({
+        value: filter.value,
+        label: (
+          <span className="status-filter__option">
+            {filter.label}
+            <Badge
+              count={counts[filter.value]}
+              showZero
+              color={filter.value === value ? token.colorPrimary : token.colorTextQuaternary}
+              size="small"
+            />
+          </span>
+        ),
+      }))}
+    />
   );
 }

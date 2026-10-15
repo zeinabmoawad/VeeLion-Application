@@ -1,11 +1,15 @@
 "use client";
 
+import { Card, Flex, Space, Spin, Typography } from "antd";
 import { useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
 import { getEmptyTasksMessage } from "@/lib/tasks";
 import type { Task, TaskFilter } from "@/types/api";
 import { StatusFilter } from "@/components/tasks/StatusFilter";
 import { TaskList } from "@/components/tasks/TaskList";
+import { TaskProgress } from "@/components/tasks/TaskProgress";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StateMessage } from "@/components/ui/StateMessage";
 
 type TaskDashboardProps = {
   initialFilter?: TaskFilter;
@@ -39,52 +43,39 @@ export function TaskDashboard({ initialFilter }: TaskDashboardProps) {
   const refreshing = loading && tasks.length > 0;
 
   return (
-    <section className="stack">
-      <header className="card" style={{ padding: "1rem" }}>
-        <h1 style={{ marginTop: 0, marginBottom: "0.5rem" }}>Task Dashboard</h1>
-        {refreshing ? (
-          <small role="status" style={{ color: "var(--muted)" }}>
-            Refreshing...
-          </small>
-        ) : null}
-      </header>
+    <Space direction="vertical" size="middle" className="full-width">
+      <PageHeader
+        title="Task Dashboard"
+        description="Track progress and keep every task's status up to date."
+        actions={
+          refreshing ? (
+            <Space role="status">
+              <Spin size="small" />
+              <Typography.Text type="secondary">Refreshing</Typography.Text>
+            </Space>
+          ) : null
+        }
+      />
 
-      <StatusFilter value={filter} counts={counts} onChange={setFilter} />
+      <Card size="small">
+        <Flex justify="space-between" align="center" wrap gap="middle">
+          <StatusFilter value={filter} counts={counts} onChange={setFilter} />
+          {counts.all > 0 ? <TaskProgress counts={counts} /> : null}
+        </Flex>
+      </Card>
 
-      {initialLoading ? (
-        <section className="card" role="status" style={{ padding: "1rem" }}>
-          <p style={{ margin: 0 }}>Loading tasks...</p>
-        </section>
-      ) : null}
+      {initialLoading ? <StateMessage variant="loading">Loading tasks...</StateMessage> : null}
 
       {loadError ? (
-        <section className="card" role="alert" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
-          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{loadError}</p>
-          <button type="button" className="button" onClick={fetchTasks}>
-            Retry
-          </button>
-        </section>
+        <StateMessage variant="error" action={{ label: "Retry", onClick: fetchTasks }}>
+          {loadError}
+        </StateMessage>
       ) : null}
 
       {updateError ? (
-        <section
-          className="card"
-          role="alert"
-          style={{
-            padding: "0.8rem 1rem",
-            borderColor: "#e3b4c0",
-            background: "#fff8fa",
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            gap: "0.8rem",
-          }}
-        >
-          <p style={{ margin: 0, color: "var(--danger)" }}>{updateError}</p>
-          <button type="button" className="button" onClick={dismissUpdateError}>
-            Dismiss
-          </button>
-        </section>
+        <StateMessage variant="error" action={{ label: "Dismiss", onClick: dismissUpdateError }}>
+          {updateError}
+        </StateMessage>
       ) : null}
 
       {!initialLoading && !loadError ? (
@@ -95,6 +86,6 @@ export function TaskDashboard({ initialFilter }: TaskDashboardProps) {
           onToggle={handleToggle}
         />
       ) : null}
-    </section>
+    </Space>
   );
 }

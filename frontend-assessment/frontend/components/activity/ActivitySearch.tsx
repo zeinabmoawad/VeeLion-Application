@@ -1,4 +1,5 @@
-import { useId } from "react";
+import { SearchOutlined } from "@ant-design/icons";
+import { Input } from "antd";
 
 type ActivitySearchProps = {
   value: string;
@@ -6,31 +7,22 @@ type ActivitySearchProps = {
 };
 
 export function ActivitySearch({ value, onChange }: ActivitySearchProps) {
-  const inputId = useId();
-
   return (
-    <div style={{ display: "flex", gap: "0.5rem" }}>
-      <label htmlFor={inputId} className="visually-hidden">
-        Search activity
-      </label>
-      <input
-        id={inputId}
-        type="search"
-        className="input"
-        placeholder="Search by action or details"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            onChange("");
-          }
-        }}
-      />
-      {value ? (
-        <button type="button" className="button" onClick={() => onChange("")}>
-          Clear
-        </button>
-      ) : null}
-    </div>
+    <Input
+      type="search"
+      size="large"
+      allowClear
+      aria-label="Search activity"
+      placeholder="Search by action or details"
+      prefix={<SearchOutlined />}
+      value={value}
+      onChange={(event) => onChange(event.target.value)}
+      onKeyDown={(event) => {
+        if (event.key === "Escape") {
+          onChange("");
+        }
+      }}
+      className="activity-search"
+    />
   );
 }

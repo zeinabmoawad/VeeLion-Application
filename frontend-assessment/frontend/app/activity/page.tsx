@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { ActivityFeed } from "@/components/activity/ActivityFeed";
 import { firstParam } from "@/lib/url";
 
@@ -10,12 +9,7 @@ type ActivityPageProps = {
 
 export default function ActivityPage({ searchParams }: ActivityPageProps) {
   return (
-    <main className="stack">
-      <nav>
-        <Link href="/" className="button">
-          Back
-        </Link>
-      </nav>
+    <main className="page-container">
       <ActivityFeed initialQuery={firstParam(searchParams.q) ?? ""} />
     </main>
   );

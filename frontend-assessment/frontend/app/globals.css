@@ -1,34 +1,10 @@
-:root {
-  --bg: #f8f8f6;
-  --surface: #ffffff;
-  --text: #1e2328;
-  --muted: #5c6670;
-  --border: #d3d8de;
-  --primary: #145e63;
-  --primary-soft: #dcefee;
-  --danger: #9f2241;
-  --chip: #f1f4f6;
-  --success: #1f6b3a;
-  --success-soft: #e3f3e8;
-  --success-border: #b7dcc3;
-  --pending: #7a5200;
-  --pending-soft: #fdf3dc;
-  --pending-border: #ecd39a;
-  --radius: 10px;
-}
-
-* {
-  box-sizing: border-box;
-}
+/* Ant Design provides the component styles and theme tokens (see components/layout/AppShell.tsx).
+   This file only holds page layout and a few touches antd has no prop for. */
 
 html,
 body {
   margin: 0;
   padding: 0;
-  min-height: 100%;
-  background: radial-gradient(circle at top right, #eef4e7, var(--bg) 55%);
-  color: var(--text);
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 a {
@@ -36,87 +12,184 @@ a {
   text-decoration: none;
 }
 
-main {
-  width: min(980px, 100% - 2rem);
+.app-layout {
+  min-height: 100vh;
+}
+
+.page-container {
+  width: min(960px, 100% - 2rem);
   margin: 0 auto;
-  padding: 2rem 0 3rem;
+  padding: 2rem 0 4rem;
 }
 
-.card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
+.full-width {
+  width: 100%;
 }
 
-.button {
-  border: 1px solid var(--border);
-  background: var(--chip);
-  color: var(--text);
-  border-radius: 8px;
-  padding: 0.45rem 0.8rem;
-  font-size: 0.9rem;
-  cursor: pointer;
+/* ---------- Header ---------- */
+
+/* Doubled class so these beat antd's .ant-layout-header defaults (padding 0 50px, 64px line-height),
+   which are injected after this stylesheet. */
+.site-header.ant-layout-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  height: auto;
+  padding: 0;
+  line-height: normal;
 }
 
-.button:hover {
-  border-color: #bac1c9;
+.site-header .page-container {
+  padding: 0;
 }
 
-.button.primary {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+.site-header__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  min-height: 60px;
 }
 
-.badge {
+.site-header__menu {
+  flex: 0 1 auto;
+  min-width: 0;
+  justify-content: flex-end;
+}
+
+.brand {
   display: inline-flex;
   align-items: center;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  padding: 0.2rem 0.65rem;
-  font-size: 0.75rem;
-  background: var(--chip);
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1rem;
 }
 
-.badge--success {
-  color: var(--success);
-  background: var(--success-soft);
-  border-color: var(--success-border);
-}
-
-.badge--pending {
-  color: var(--pending);
-  background: var(--pending-soft);
-  border-color: var(--pending-border);
-}
-
-.input {
-  width: 100%;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  padding: 0.55rem 0.7rem;
-  font-size: 0.95rem;
-  background: #fff;
-}
-
-/* The component renders its own Clear button. */
-.input[type="search"]::-webkit-search-cancel-button {
-  display: none;
-}
-
-.visually-hidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-.stack {
+.brand__mark {
   display: grid;
-  gap: 1rem;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+  background: linear-gradient(135deg, #14b8a6, #0f766e 55%, #134e4a);
+  color: #fff;
+  font-size: 0.9rem;
+  line-height: 1;
+}
+
+/* ---------- Page header ---------- */
+
+.page-header .page-header__title {
+  margin: 0 0 0.25rem;
+}
+
+/* ---------- Home ---------- */
+
+.hero {
+  max-width: 640px;
+  padding: 1.5rem 0 2rem;
+}
+
+.hero .hero__title {
+  margin: 0.75rem 0 0.5rem;
+  font-size: clamp(2rem, 1.4rem + 2.6vw, 3rem);
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+
+.hero .hero__lead {
+  font-size: 1.05rem;
+}
+
+.module-link,
+.module-card {
+  display: block;
+  height: 100%;
+}
+
+.module-card__icon {
+  display: inline-grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: 1rem;
+  border-radius: 12px;
+  background: rgba(20, 184, 166, 0.14);
+  color: #14b8a6;
+  font-size: 1.25rem;
+}
+
+.module-card__cta .anticon {
+  margin-left: 0.25rem;
+  transition: transform 0.2s ease;
+}
+
+.module-card:hover .module-card__cta .anticon {
+  transform: translateX(3px);
+}
+
+/* ---------- Tasks ---------- */
+
+.status-filter__option {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.task-progress {
+  display: grid;
+  min-width: min(260px, 100%);
+}
+
+.task-progress .ant-progress {
+  margin: 0;
+}
+
+.task-item__control {
+  display: inline-flex;
+  margin-top: 4px;
+}
+
+.task-item__meta {
+  font-size: 0.8rem;
+}
+
+/* ---------- Activity ---------- */
+
+.activity-search {
+  flex: 1 1 320px;
+  max-width: 520px;
+}
+
+.activity-timeline {
+  padding-top: 0.5rem;
+}
+
+.activity-timeline .ant-timeline-item:last-child {
+  padding-bottom: 0;
+}
+
+.activity-item__time {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+/* ---------- States ---------- */
+
+.state-message__spin-area {
+  min-height: 72px;
+}
+
+@media (max-width: 560px) {
+  .page-container {
+    padding-top: 1.25rem;
+  }
+
+  .ant-segmented {
+    width: 100%;
+  }
+
+  .ant-segmented .ant-segmented-item {
+    flex: 1;
+  }
 }

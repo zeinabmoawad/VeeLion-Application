@@ -1,8 +1,11 @@
 "use client";
 
+import { Card, Flex, Space, Typography } from "antd";
 import { useActivity } from "@/hooks/useActivity";
 import { ActivityList } from "@/components/activity/ActivityList";
 import { ActivitySearch } from "@/components/activity/ActivitySearch";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StateMessage } from "@/components/ui/StateMessage";
 
 type ActivityFeedProps = {
   initialQuery?: string;
@@ -13,65 +16,52 @@ export function ActivityFeed({ initialQuery }: ActivityFeedProps) {
     useActivity(initialQuery);
 
   const initialLoading = loading && activity.length === 0;
+  const loaded = !initialLoading && !error && activity.length > 0;
 
   function renderContent() {
     if (initialLoading) {
-      return (
-        <section className="card" role="status" style={{ padding: "1rem" }}>
-          <p style={{ margin: 0 }}>Loading activity...</p>
-        </section>
-      );
+      return <StateMessage variant="loading">Loading activity...</StateMessage>;
     }
 
     if (error) {
       return (
-        <section className="card" role="alert" style={{ padding: "1rem", borderColor: "#e3b4c0", background: "#fff8fa" }}>
-          <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--danger)" }}>{error}</p>
-          <button type="button" className="button" onClick={fetchActivity}>
-            Retry
-          </button>
-        </section>
+        <StateMessage variant="error" action={{ label: "Retry", onClick: fetchActivity }}>
+          {error}
+        </StateMessage>
       );
     }
 
     if (activity.length === 0) {
+      return <StateMessage variant="empty">No activity yet.</StateMessage>;
+    }
+
+    if (visibleActivity.length === 0) {
       return (
-        <section className="card" style={{ padding: "1rem" }}>
-          <p style={{ margin: 0, color: "var(--muted)" }}>No activity yet.</p>
-        </section>
+        <StateMessage variant="empty" action={{ label: "Clear search", onClick: () => setQuery("") }}>
+          No activity matches &ldquo;{query.trim()}&rdquo;.
+        </StateMessage>
       );
     }
 
-    return (
-      <>
-        <p role="status" style={{ margin: 0, color: "var(--muted)", fontSize: "0.85rem" }}>
-          Showing {visibleActivity.length} of {activity.length} entries, newest first
-        </p>
-
-        {visibleActivity.length === 0 ? (
-          <section className="card" style={{ padding: "1rem" }}>
-            <p style={{ marginTop: 0, marginBottom: "0.75rem", color: "var(--muted)" }}>
-              No activity matches &ldquo;{query.trim()}&rdquo;.
-            </p>
-            <button type="button" className="button" onClick={() => setQuery("")}>
-              Clear search
-            </button>
-          </section>
-        ) : (
-          <ActivityList items={visibleActivity} />
-        )}
-      </>
-    );
+    return <ActivityList items={visibleActivity} />;
   }
 
   return (
-    <section className="stack">
-      <header className="card" style={{ padding: "1rem" }}>
-        <h1 style={{ marginTop: 0, marginBottom: "0.5rem" }}>Activity Feed</h1>
-        <ActivitySearch value={query} onChange={setQuery} />
-      </header>
+    <Space direction="vertical" size="middle" className="full-width">
+      <PageHeader title="Activity Feed" description="Everything that happened across the system, newest first." />
+
+      <Card size="small">
+        <Flex justify="space-between" align="center" wrap gap="middle">
+          <ActivitySearch value={query} onChange={setQuery} />
+          {loaded ? (
+            <Typography.Text type="secondary" role="status">
+              Showing <Typography.Text strong>{visibleActivity.length}</Typography.Text> of {activity.length}
+            </Typography.Text>
+          ) : null}
+        </Flex>
+      </Card>
 
       {renderContent()}
-    </section>
+    </Space>
   );
 }

@@ -1,4 +1,5 @@
-import { formatDateTime } from "@/lib/format";
+import { Flex, Tooltip, Typography } from "antd";
+import { formatDateTime, formatRelativeTime } from "@/lib/format";
 import type { ActivityLog } from "@/types/api";
 
 type ActivityItemProps = {
@@ -7,12 +8,20 @@ type ActivityItemProps = {
 
 export function ActivityItem({ item }: ActivityItemProps) {
   return (
-    <li style={{ borderBottom: "1px solid var(--border)", paddingBottom: "0.6rem" }}>
-      <div style={{ fontWeight: 600 }}>{item.action || "(no action)"}</div>
-      <div>{item.info || "(no info)"}</div>
-      <small style={{ color: "var(--muted)" }}>
-        <time dateTime={item.when}>{formatDateTime(item.when)}</time>
-      </small>
-    </li>
+    <div>
+      <Flex justify="space-between" align="baseline" wrap gap="small">
+        <Typography.Text strong={Boolean(item.action)} italic={!item.action} type={item.action ? undefined : "secondary"}>
+          {item.action || "(no action)"}
+        </Typography.Text>
+        <Tooltip title={formatDateTime(item.when)}>
+          <Typography.Text type="secondary" className="activity-item__time">
+            <time dateTime={item.when}>{formatRelativeTime(item.when)}</time>
+          </Typography.Text>
+        </Tooltip>
+      </Flex>
+      <Typography.Text type="secondary" italic={!item.info}>
+        {item.info || "(no info)"}
+      </Typography.Text>
+    </div>
   );
 }
