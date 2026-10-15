@@ -8,6 +8,12 @@
   --primary-soft: #dcefee;
   --danger: #9f2241;
   --chip: #f1f4f6;
+  --success: #1f6b3a;
+  --success-soft: #e3f3e8;
+  --success-border: #b7dcc3;
+  --pending: #7a5200;
+  --pending-soft: #fdf3dc;
+  --pending-border: #ecd39a;
   --radius: 10px;
 }
 
@@ -72,6 +78,18 @@ main {
   background: var(--chip);
 }
 
+.badge--success {
+  color: var(--success);
+  background: var(--success-soft);
+  border-color: var(--success-border);
+}
+
+.badge--pending {
+  color: var(--pending);
+  background: var(--pending-soft);
+  border-color: var(--pending-border);
+}
+
 .input {
   width: 100%;
   border-radius: 8px;
@@ -79,6 +97,23 @@ main {
   padding: 0.55rem 0.7rem;
   font-size: 0.95rem;
   background: #fff;
+}
+
+/* The component renders its own Clear button. */
+.input[type="search"]::-webkit-search-cancel-button {
+  display: none;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .stack {

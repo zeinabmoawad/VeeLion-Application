@@ -21,7 +21,9 @@ export const TaskItem = memo(function TaskItem({ task, busy, onToggle }: TaskIte
     >
       <div style={{ display: "flex", justifyContent: "space-between", gap: "0.8rem", alignItems: "start" }}>
         <p style={{ margin: 0, fontWeight: 600 }}>{task.title}</p>
-        <span className="badge">{task.completed ? "Completed" : "Pending"}</span>
+        <span className={task.completed ? "badge badge--success" : "badge badge--pending"}>
+          {task.completed ? "Completed" : "Pending"}
+        </span>
       </div>
 
       <small style={{ color: "var(--muted)" }}>

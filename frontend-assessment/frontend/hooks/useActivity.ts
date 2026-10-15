@@ -1,13 +1,17 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { filterActivity } from "@/lib/activity";
+import { filterActivity, sortActivityNewestFirst } from "@/lib/activity";
 import { getErrorMessage, isAbortError, requestJson } from "@/lib/http";
+import { replaceSearchParam } from "@/lib/url";
 import type { ActivityLog } from "@/types/api";
 
-export function useActivity() {
+const URL_SYNC_DELAY_MS = 300;
+
+export function useActivity(initialQuery = "") {
   const [activity, setActivity] = useState<ActivityLog[]>([]);
-  const [query, setQuery] = useState("");
+  const [query, setQuery] = useState(initialQuery);
+  const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const loadControllerRef = useRef<AbortController | null>(null);
 
@@ -18,6 +22,7 @@ export function useActivity() {
     loadControllerRef.current = controller;
 
     try {
+      setLoading(true);
       setError(null);
 
       const data = await requestJson<ActivityLog[]>("/api/activity", {
@@ -28,7 +33,7 @@ export function useActivity() {
         throw new Error("Received an unexpected response from the activity service.");
       }
 
-      setActivity(data);
+      setActivity(sortActivityNewestFirst(data));
     } catch (error) {
       if (isAbortError(error)) {
         return;
@@ -36,6 +41,10 @@ export function useActivity() {
 
       setError(getErrorMessage(error, "Could not load activity right now."));
       setActivity([]);
+    } finally {
+      if (loadControllerRef.current === controller) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -45,12 +54,22 @@ export function useActivity() {
     return () => loadControllerRef.current?.abort();
   }, [fetchActivity]);
 
+  // Keep ?q= in sync so searches survive reloads and can be shared; debounced while typing.
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      replaceSearchParam("q", query.trim() || null);
+    }, URL_SYNC_DELAY_MS);
+
+    return () => clearTimeout(timeoutId);
+  }, [query]);
+
   const visibleActivity = useMemo(() => filterActivity(activity, query), [activity, query]);
 
   return {
     activity,
     visibleActivity,
     query,
+    loading,
     error,
     setQuery,
     fetchActivity,

@@ -4,14 +4,15 @@ import { TaskItem } from "@/components/tasks/TaskItem";
 type TaskListProps = {
   tasks: Task[];
   pendingTaskIds: ReadonlySet<string>;
+  emptyMessage: string;
   onToggle: (task: Task) => void;
 };
 
-export function TaskList({ tasks, pendingTaskIds, onToggle }: TaskListProps) {
+export function TaskList({ tasks, pendingTaskIds, emptyMessage, onToggle }: TaskListProps) {
   if (tasks.length === 0) {
     return (
       <section className="card" style={{ padding: "1rem" }}>
-        <p style={{ margin: 0, color: "var(--muted)" }}>No tasks match this filter.</p>
+        <p style={{ margin: 0, color: "var(--muted)" }}>{emptyMessage}</p>
       </section>
     );
   }

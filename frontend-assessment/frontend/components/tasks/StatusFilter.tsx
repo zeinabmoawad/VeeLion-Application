@@ -1,3 +1,4 @@
+import type { TaskCounts } from "@/lib/tasks";
 import type { TaskFilter } from "@/types/api";
 
 const FILTERS: Array<{ label: string; value: TaskFilter }> = [
@@ -8,10 +9,11 @@ const FILTERS: Array<{ label: string; value: TaskFilter }> = [
 
 type StatusFilterProps = {
   value: TaskFilter;
+  counts: TaskCounts;
   onChange: (value: TaskFilter) => void;
 };
 
-export function StatusFilter({ value, onChange }: StatusFilterProps) {
+export function StatusFilter({ value, counts, onChange }: StatusFilterProps) {
   return (
     <section aria-label="Filter tasks by status" className="card" style={{ padding: "0.8rem" }}>
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap" }}>
@@ -26,7 +28,7 @@ export function StatusFilter({ value, onChange }: StatusFilterProps) {
               onClick={() => onChange(filter.value)}
               aria-pressed={active}
             >
-              {filter.label}
+              {filter.label} ({counts[filter.value]})
             </button>
           );
         })}

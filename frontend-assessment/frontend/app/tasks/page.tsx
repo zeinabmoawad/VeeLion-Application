@@ -1,7 +1,15 @@
 import Link from "next/link";
 import { TaskDashboard } from "@/components/tasks/TaskDashboard";
+import { parseTaskFilter } from "@/lib/tasks";
+import { firstParam } from "@/lib/url";
 
-export default function TasksPage() {
+type TasksPageProps = {
+  searchParams: {
+    status?: string | string[];
+  };
+};
+
+export default function TasksPage({ searchParams }: TasksPageProps) {
   return (
     <main className="stack">
       <nav>
@@ -9,7 +17,7 @@ export default function TasksPage() {
           Back
         </Link>
       </nav>
-      <TaskDashboard />
+      <TaskDashboard initialFilter={parseTaskFilter(firstParam(searchParams.status))} />
     </main>
   );
 }

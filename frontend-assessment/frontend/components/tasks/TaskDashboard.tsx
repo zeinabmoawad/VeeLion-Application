@@ -2,14 +2,20 @@
 
 import { useCallback } from "react";
 import { useTasks } from "@/hooks/useTasks";
-import type { Task } from "@/types/api";
+import { getEmptyTasksMessage } from "@/lib/tasks";
+import type { Task, TaskFilter } from "@/types/api";
 import { StatusFilter } from "@/components/tasks/StatusFilter";
 import { TaskList } from "@/components/tasks/TaskList";
 
-export function TaskDashboard() {
+type TaskDashboardProps = {
+  initialFilter?: TaskFilter;
+};
+
+export function TaskDashboard({ initialFilter }: TaskDashboardProps) {
   const {
     tasks,
     filteredTasks,
+    counts,
     filter,
     loading,
     loadError,
@@ -19,7 +25,7 @@ export function TaskDashboard() {
     fetchTasks,
     updateTaskStatus,
     dismissUpdateError,
-  } = useTasks();
+  } = useTasks(initialFilter);
 
   const handleToggle = useCallback(
     (task: Task) => {
@@ -43,10 +49,10 @@ export function TaskDashboard() {
         ) : null}
       </header>
 
-      <StatusFilter value={filter} onChange={setFilter} />
+      <StatusFilter value={filter} counts={counts} onChange={setFilter} />
 
       {initialLoading ? (
-        <section className="card" style={{ padding: "1rem" }}>
+        <section className="card" role="status" style={{ padding: "1rem" }}>
           <p style={{ margin: 0 }}>Loading tasks...</p>
         </section>
       ) : null}
@@ -82,7 +88,12 @@ export function TaskDashboard() {
       ) : null}
 
       {!initialLoading && !loadError ? (
-        <TaskList tasks={filteredTasks} pendingTaskIds={pendingTaskIds} onToggle={handleToggle} />
+        <TaskList
+          tasks={filteredTasks}
+          pendingTaskIds={pendingTaskIds}
+          emptyMessage={getEmptyTasksMessage(tasks.length, filter)}
+          onToggle={handleToggle}
+        />
       ) : null}
     </section>
   );
