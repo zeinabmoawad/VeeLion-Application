@@ -1,12 +1,19 @@
+import "server-only";
+
 import { BACKEND_BASE_URL } from "@/lib/constants";
 import { ApiError, parseErrorMessage } from "@/lib/http";
-import type { ActivityLog, Task, TaskResponse, TasksResponse } from "@/types/api";
+import { isRecord, parseActivityLog, parseList, parseTask } from "@/lib/validators";
+import type { ActivityLog, Task } from "@/types/api";
 
 function buildBackendUrl(path: string): string {
   return `${BACKEND_BASE_URL}${path}`;
 }
 
-async function backendFetch<T>(path: string, init?: RequestInit): Promise<T> {
+function invalidResponse(resource: string): ApiError {
+  return new ApiError(`Received an invalid ${resource} response from the backend.`, 502);
+}
+
+async function backendFetch(path: string, init?: RequestInit): Promise<unknown> {
   let response: Response;
 
   try {
@@ -22,16 +29,34 @@ async function backendFetch<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(await parseErrorMessage(response), response.status);
   }
 
-  return (await response.json()) as T;
+  try {
+    return await response.json();
+  } catch {
+    throw new ApiError("Backend returned a response that is not valid JSON.", 502);
+  }
+}
+
+function parseListOrThrow<T>(value: unknown, parseItem: (item: unknown) => T | null, resource: string): T[] {
+  const parsed = parseList(value, parseItem);
+
+  if (!parsed) {
+    throw invalidResponse(resource);
+  }
+
+  if (parsed.skipped > 0) {
+    console.warn(`[backendApi] Skipped ${parsed.skipped} malformed ${resource} item(s).`);
+  }
+
+  return parsed.items;
 }
 
 export async function getTasksFromBackend(): Promise<Task[]> {
-  const body = await backendFetch<TasksResponse>("/tasks");
-  return body.data;
+  const body = await backendFetch("/tasks");
+  return parseListOrThrow(isRecord(body) ? body.data : undefined, parseTask, "tasks");
 }
 
 export async function updateTaskInBackend(taskId: string, completed: boolean): Promise<Task> {
-  const body = await backendFetch<TaskResponse>(`/tasks/${encodeURIComponent(taskId)}`, {
+  const body = await backendFetch(`/tasks/${encodeURIComponent(taskId)}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
@@ -39,9 +64,17 @@ export async function updateTaskInBackend(taskId: string, completed: boolean): P
     body: JSON.stringify({ completed }),
   });
 
-  return body.data;
+  const task = parseTask(isRecord(body) ? body.data : undefined);
+
+  if (!task) {
+    throw invalidResponse("task");
+  }
+
+  return task;
 }
 
 export async function getActivityFromBackend(): Promise<ActivityLog[]> {
-  return backendFetch<ActivityLog[]>("/activity");
+  // The backend returns a raw array for activity (not wrapped in { data }).
+  const body = await backendFetch("/activity");
+  return parseListOrThrow(body, parseActivityLog, "activity");
 }

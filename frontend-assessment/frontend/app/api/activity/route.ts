@@ -5,7 +5,7 @@ import { getActivityFromBackend } from "@/lib/backendApi";
 export async function GET() {
   try {
     const logs = await getActivityFromBackend();
-    return NextResponse.json(logs, { status: 200 });
+    return NextResponse.json({ data: logs }, { status: 200 });
   } catch (error) {
     return handleRouteError(error, "Unable to fetch activity logs.");
   }

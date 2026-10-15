@@ -13,13 +13,16 @@ export type ActivityLog = {
   when: string;
 };
 
-export type TasksResponse = {
-  data: Task[];
+// Every /api/* route responds with the same { data } envelope, even where the backend doesn't.
+export type DataResponse<T> = {
+  data: T;
 };
 
-export type TaskResponse = {
-  data: Task;
-};
+export type TasksResponse = DataResponse<Task[]>;
+
+export type TaskResponse = DataResponse<Task>;
+
+export type ActivityResponse = DataResponse<ActivityLog[]>;
 
 export type ErrorResponse = {
   error?: {

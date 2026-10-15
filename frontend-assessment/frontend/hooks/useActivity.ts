@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { filterActivity, sortActivityNewestFirst } from "@/lib/activity";
 import { getErrorMessage, isAbortError, requestJson } from "@/lib/http";
 import { replaceSearchParam } from "@/lib/url";
-import type { ActivityLog } from "@/types/api";
+import type { ActivityLog, ActivityResponse } from "@/types/api";
 
 const URL_SYNC_DELAY_MS = 300;
 
@@ -25,15 +25,15 @@ export function useActivity(initialQuery = "") {
       setLoading(true);
       setError(null);
 
-      const data = await requestJson<ActivityLog[]>("/api/activity", {
+      const body = await requestJson<ActivityResponse>("/api/activity", {
         signal: controller.signal,
       });
 
-      if (!Array.isArray(data)) {
+      if (!Array.isArray(body.data)) {
         throw new Error("Received an unexpected response from the activity service.");
       }
 
-      setActivity(sortActivityNewestFirst(data));
+      setActivity(sortActivityNewestFirst(body.data));
     } catch (error) {
       if (isAbortError(error)) {
         return;
