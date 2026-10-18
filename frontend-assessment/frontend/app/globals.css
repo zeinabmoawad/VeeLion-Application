@@ -5,6 +5,8 @@ html,
 body {
   margin: 0;
   padding: 0;
+    height: 100vh;
+
 }
 
 a {
@@ -13,23 +15,27 @@ a {
 }
 
 .app-layout {
-  min-height: 100vh;
+  height: 100vh;
 }
 
 .page-container {
   width: min(960px, 100% - 2rem);
   margin: 0 auto;
   padding: 2rem 0 4rem;
+  /* height: 100vh; */
 }
 
 .full-width {
   width: 100%;
 }
-
+.ant-layout {
+  height: 100vh;
+} 
 /* ---------- Header ---------- */
 
 /* Doubled class so these beat antd's .ant-layout-header defaults (padding 0 50px, 64px line-height),
    which are injected after this stylesheet. */
+
 .site-header.ant-layout-header {
   position: sticky;
   top: 0;
@@ -172,6 +178,20 @@ a {
 .activity-item__time {
   font-size: 0.8rem;
   white-space: nowrap;
+}
+
+/* ---------- Reports ---------- */
+
+.summary-stat {
+  height: 100%;
+}
+
+.status-breakdown__row .ant-progress {
+  margin: 0.25rem 0 0;
+}
+
+.status-breakdown__note {
+  font-size: 0.8rem;
 }
 
 /* ---------- States ---------- */

@@ -2,8 +2,8 @@ import "server-only";
 
 import { BACKEND_BASE_URL } from "@/lib/constants";
 import { ApiError, parseErrorMessage } from "@/lib/http";
-import { isRecord, parseActivityLog, parseList, parseTask } from "@/lib/validators";
-import type { ActivityLog, Task } from "@/types/api";
+import { isRecord, parseActivityLog, parseList, parseTask, parseTasksSummary } from "@/lib/validators";
+import type { ActivityLog, Task, TasksSummary } from "@/types/api";
 
 function buildBackendUrl(path: string): string {
   return `${BACKEND_BASE_URL}${path}`;
@@ -77,4 +77,15 @@ export async function getActivityFromBackend(): Promise<ActivityLog[]> {
   // The backend returns a raw array for activity (not wrapped in { data }).
   const body = await backendFetch("/activity");
   return parseListOrThrow(body, parseActivityLog, "activity");
+}
+
+export async function getTasksSummaryFromBackend(): Promise<TasksSummary> {
+  // Like activity, the reports endpoint returns a raw object (not wrapped in { data }).
+  const summary = parseTasksSummary(await backendFetch("/reports/tasks-summary"));
+
+  if (!summary) {
+    throw invalidResponse("tasks summary");
+  }
+
+  return summary;
 }

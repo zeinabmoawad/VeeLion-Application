@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 const NAV_LINKS = [
   { href: "/tasks", label: "Tasks" },
   { href: "/activity", label: "Activity" },
+  { href: "/reports", label: "Reports" },
 ];
 
 function getActiveKeys(pathname: string): string[] {

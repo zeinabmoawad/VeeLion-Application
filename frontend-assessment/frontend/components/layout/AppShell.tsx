@@ -23,7 +23,7 @@ const THEME: ThemeConfig = {
 export function AppShell({ children }: { children: ReactNode }) {
   return (
     // Collects antd's CSS-in-JS styles during SSR so the first paint is already styled.
-    <AntdRegistry>
+    // <AntdRegistry>
       <ConfigProvider theme={THEME}>
         <App>
           <Layout className="app-layout">
@@ -32,6 +32,6 @@ export function AppShell({ children }: { children: ReactNode }) {
           </Layout>
         </App>
       </ConfigProvider>
-    </AntdRegistry>
+    // </AntdRegistry>
   );
 }
