@@ -1,51 +1,25 @@
-const fs = require('node:fs');
-const path = require('node:path');
+const { createId } = require('../../../utils/id');
+const { readJsonArray, updateJsonArray } = require('../../../utils/jsonStore');
+const { ACTIVITY_FILE_PATH } = require('../../../config');
 
-const fp = path.join(process.cwd(), 'data', 'activity.json');
-
-function loadDataA() {
-  if (!fs.existsSync(fp)) {
-    fs.writeFileSync(fp, '[]');
-  }
-
-  let raw = fs.readFileSync(fp, 'utf8');
-  if (!raw) {
-    raw = '[]';
-  }
-
-  return JSON.parse(raw);
+async function getAllActivity() {
+  return readJsonArray(ACTIVITY_FILE_PATH);
 }
 
-function loadDataB() {
-  if (!fs.existsSync(fp)) {
-    fs.writeFileSync(fp, '[]');
-  }
-
-  let raw = fs.readFileSync(fp, 'utf8');
-  if (!raw) {
-    raw = '[]';
-  }
-
-  return JSON.parse(raw);
-}
-
-function getAllActivity() {
-  const arr = loadDataA();
-  return arr;
-}
-
-function createNewActivity(b) {
-  const list = loadDataB();
-  const one = {
-    id: String(Date.now()),
-    action: b.action,
-    info: b.info,
+// Expects a payload already normalized by activityValidator.
+async function createNewActivity(payload) {
+  const entry = {
+    id: createId(),
+    action: payload.action,
+    info: payload.info,
     when: new Date().toISOString(),
   };
 
-  list.push(one);
-  fs.writeFileSync(fp, JSON.stringify(list, null, 2));
-  return one;
+  await updateJsonArray(ACTIVITY_FILE_PATH, (entries) => {
+    entries.push(entry);
+  });
+
+  return entry;
 }
 
 module.exports = {
