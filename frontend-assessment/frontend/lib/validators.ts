@@ -1,4 +1,4 @@
-import type { ActivityLog, Task } from "@/types/api";
+import type { ActivityLog, Task, TasksSummary } from "@/types/api";
 
 // Runtime checks for data coming from the backend. TypeScript types alone are only
 // promises; these make sure a malformed payload can't reach the UI as a "Task".
@@ -45,6 +45,31 @@ export function parseActivityLog(value: unknown): ActivityLog | null {
     action: optionalString(value.action),
     info: optionalString(value.info),
     when: value.when,
+  };
+}
+
+function isCount(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+export function parseTasksSummary(value: unknown): TasksSummary | null {
+  if (!isRecord(value) || !isRecord(value.byStatus)) {
+    return null;
+  }
+
+  const { total, recentActivityCount, byStatus } = value;
+  const todo = byStatus.todo;
+  const inProgress = byStatus["in-progress"];
+  const done = byStatus.done;
+
+  if (![total, recentActivityCount, todo, inProgress, done].every(isCount)) {
+    return null;
+  }
+
+  return {
+    total: total as number,
+    byStatus: { todo: todo as number, "in-progress": inProgress as number, done: done as number },
+    recentActivityCount: recentActivityCount as number,
   };
 }
 

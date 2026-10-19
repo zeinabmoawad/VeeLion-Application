@@ -24,6 +24,16 @@ export type TaskResponse = DataResponse<Task>;
 
 export type ActivityResponse = DataResponse<ActivityLog[]>;
 
+export type TaskStatus = "todo" | "in-progress" | "done";
+
+export type TasksSummary = {
+  total: number;
+  byStatus: Record<TaskStatus, number>;
+  recentActivityCount: number;
+};
+
+export type TasksSummaryResponse = DataResponse<TasksSummary>;
+
 export type ErrorResponse = {
   error?: {
     message?: string;
