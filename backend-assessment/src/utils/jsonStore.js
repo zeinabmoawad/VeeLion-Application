@@ -24,18 +24,18 @@ function withFileLock(filePath, task) {
   return run;
 }
 
-async function readJsonArray(filePath) {
-  let raw;
-  try {
-    raw = await fs.readFile(filePath, 'utf-8');
-  } catch (error) {
-    if (error.code === 'ENOENT') {
-      return [];
-    }
+// Parsed contents of each file, keyed by path and tagged with the file's
+// stat signature. A read only costs a stat() while the file is unchanged, and
+// edits made outside the app are still picked up because they change the
+// signature. Our own writes clear the entry.
+const readCache = new Map();
 
-    throw error;
-  }
+function statSignature(stats) {
+  return `${stats.mtimeMs}:${stats.size}:${stats.ino}`;
+}
 
+async function readFromDisk(filePath) {
+  const raw = await fs.readFile(filePath, 'utf-8');
   if (!raw.trim()) {
     return [];
   }
@@ -47,6 +47,34 @@ async function readJsonArray(filePath) {
   }
 
   return parsed;
+}
+
+// The returned array may be shared with other requests through the cache:
+// callers must treat it as read-only. Changes go through updateJsonArray.
+async function readJsonArray(filePath) {
+  const key = path.resolve(filePath);
+
+  let stats;
+  try {
+    stats = await fs.stat(key);
+  } catch (error) {
+    if (error.code === 'ENOENT') {
+      readCache.delete(key);
+      return [];
+    }
+
+    throw error;
+  }
+
+  const signature = statSignature(stats);
+  const cached = readCache.get(key);
+  if (cached && cached.signature === signature) {
+    return cached.items;
+  }
+
+  const items = await readFromDisk(key);
+  readCache.set(key, { signature, items });
+  return items;
 }
 
 async function writeJsonArray(filePath, data) {
@@ -69,9 +97,27 @@ async function writeJsonArray(filePath, data) {
 // Resolves with whatever `mutate` returns.
 function updateJsonArray(filePath, mutate) {
   return withFileLock(filePath, async () => {
-    const items = await readJsonArray(filePath);
+    const key = path.resolve(filePath);
+
+    // Read a private copy from disk rather than the shared cached array, so a
+    // failed mutation or write never leaves half-applied changes in the cache.
+    let items;
+    try {
+      items = await readFromDisk(key);
+    } catch (error) {
+      if (error.code !== 'ENOENT') {
+        throw error;
+      }
+      items = [];
+    }
+
     const result = await mutate(items);
-    await writeJsonArray(filePath, items);
+    try {
+      await writeJsonArray(key, items);
+    } finally {
+      readCache.delete(key);
+    }
+
     return result;
   });
 }

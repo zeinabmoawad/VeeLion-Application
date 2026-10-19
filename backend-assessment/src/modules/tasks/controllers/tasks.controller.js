@@ -1,9 +1,18 @@
 const tasksService = require('../services/tasks.service');
 const { validateCreateTask, validateUpdateTask } = require('../utils/taskValidator');
+const { parsePagination, paginate } = require('../../../utils/pagination');
 
 async function listTasks(req, res) {
+  const pagination = parsePagination(req.query);
   const tasks = await tasksService.getAllTasks();
-  res.status(200).json({ data: tasks });
+
+  if (!pagination) {
+    return res.status(200).json({ data: tasks });
+  }
+
+  const page = paginate(tasks, pagination);
+  res.set('X-Total-Count', String(page.meta.total));
+  return res.status(200).json({ data: page.items, meta: page.meta });
 }
 
 async function getTask(req, res) {
