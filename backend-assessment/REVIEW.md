@@ -42,6 +42,7 @@ Most problems come from the **Activity** module not following these patterns, an
 | S1 | Security | High | Mass assignment (same issue as B1) |
 | S2 | Security | Medium | Activity input has no limits; stored-XSS risk |
 | S3 | Security | Medium | No authentication, rate limiting or security headers |
+| S4 | Security | High | Dependency versions in the lockfile have known vulnerabilities |
 | M1 | Maintainability | Medium | The two modules follow different patterns |
 | M2 | Maintainability | Medium | Response shapes differ between modules |
 | M3 | Maintainability | Medium | Task changes are not written to the activity log |
@@ -216,6 +217,18 @@ This is the same issue as **B1**. It is listed here because of its security impa
 **How to improve.**
 - **Now:** add `helmet()` (or at least `app.disable('x-powered-by')`) and `express-rate-limit` on write routes. Configure CORS explicitly, or not at all if the API is only called server to server, as the frontend now does.
 - **Later:** add authentication, even a shared API key from an environment variable, before exposing the API publicly. Consider making `POST /activity` internal-only once task changes write their own activity entries (M3).
+
+### S4. Dependency versions in the lockfile have known vulnerabilities — High
+
+**What is wrong.** `npm audit` reports three advisories in Express's own dependencies, at the versions pinned in `package-lock.json`:
+
+- `proxy-addr` ≤ 2.0.7 — **critical**: IP spoofing through IPv4-mapped IPv6 addresses
+- `body-parser` < 1.20.6: an invalid `limit` value silently turns off body size checks
+- `qs` ≤ 6.15.3 — moderate: several denial-of-service issues
+
+**Why it is a problem.** `proxy-addr` decides `req.ip` when `trust proxy` is on, so a spoofed address would get around per-IP rate limiting. `body-parser` and `qs` handle every request body and query string.
+
+**How to improve.** Update Express within its existing `^4` range to 4.22.3. That version pulls in fixed versions of all three packages, and `npm audit` then reports 0 vulnerabilities. Run `npm audit` in CI so new advisories are caught.
 
 ---
 

@@ -1,13 +1,26 @@
 const express = require('express');
+const helmet = require('helmet');
 
+const config = require('./config');
 const tasksRouter = require('./modules/tasks/routes/tasks.routes');
 const activityRouter = require('./modules/activity/routes/activity.routes');
+const apiKeyAuth = require('./middleware/apiKeyAuth');
+const writeRateLimiter = require('./middleware/writeRateLimiter');
 const errorHandler = require('./middleware/errorHandler');
 const HttpError = require('./utils/httpError');
 
 const app = express();
 
-app.use(express.json());
+if (config.TRUST_PROXY !== undefined) {
+  app.set('trust proxy', config.TRUST_PROXY);
+}
+
+// Security headers (nosniff, frame-ancestors, etc.); also drops X-Powered-By.
+app.use(helmet());
+app.use(writeRateLimiter(config.WRITE_RATE_LIMIT_PER_MINUTE));
+// Authenticate before parsing, so unauthenticated bodies are never processed.
+app.use(apiKeyAuth(config.API_KEY));
+app.use(express.json({ limit: config.JSON_BODY_LIMIT }));
 
 app.use('/tasks', tasksRouter);
 app.use('/activity', activityRouter);

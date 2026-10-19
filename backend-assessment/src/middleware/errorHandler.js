@@ -6,7 +6,13 @@ function errorHandler(error, req, res, next) {
   }
 
   const statusCode = Number.isInteger(error.statusCode) ? error.statusCode : 500;
-  const message = statusCode === 500 ? 'Internal server error' : error.message;
+  let message = error.message;
+  if (statusCode >= 500) {
+    message = 'Internal server error';
+  } else if (error.type === 'entity.parse.failed') {
+    // Don't echo JSON parser internals (e.g. "Unexpected token } in JSON at position 12").
+    message = 'Request body is not valid JSON.';
+  }
 
   const response = {
     error: {
