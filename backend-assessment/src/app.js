@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const config = require('./config');
 const tasksRouter = require('./modules/tasks/routes/tasks.routes');
 const activityRouter = require('./modules/activity/routes/activity.routes');
+const reportsRouter = require('./modules/reports/routes/reports.routes');
 const apiKeyAuth = require('./middleware/apiKeyAuth');
 const writeRateLimiter = require('./middleware/writeRateLimiter');
 const errorHandler = require('./middleware/errorHandler');
@@ -24,6 +25,7 @@ app.use(express.json({ limit: config.JSON_BODY_LIMIT }));
 
 app.use('/tasks', tasksRouter);
 app.use('/activity', activityRouter);
+app.use('/reports', reportsRouter);
 
 app.use((req, res, next) => {
   next(new HttpError(404, `Route not found: ${req.method} ${req.originalUrl}`));
