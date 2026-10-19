@@ -7,7 +7,7 @@ async function getAllActivity() {
 }
 
 // Expects a payload already normalized by activityValidator.
-async function createNewActivity(payload) {
+async function createActivity(payload) {
   const entry = {
     id: createId(),
     action: payload.action,
@@ -24,5 +24,5 @@ async function createNewActivity(payload) {
 
 module.exports = {
   getAllActivity,
-  createNewActivity,
+  createActivity,
 };

@@ -1,2 +1,7 @@
 node_modules/
 *.log
+
+# Live data written by the running app. Sample data lives in data/seed/
+# and is copied into place with `npm run seed`.
+data/*.json
+data/*.tmp

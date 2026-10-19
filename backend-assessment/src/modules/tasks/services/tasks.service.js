@@ -2,6 +2,7 @@ const { createId } = require('../../../utils/id');
 const { readJsonArray, updateJsonArray } = require('../../../utils/jsonStore');
 const HttpError = require('../../../utils/httpError');
 const { TASKS_FILE_PATH } = require('../../../config');
+const activityService = require('../../activity/services/activity.service');
 
 // Callers pass payloads already normalized by taskValidator.
 
@@ -27,6 +28,19 @@ function findTaskIndex(tasks, taskId) {
   return taskIndex;
 }
 
+// Records a task change in the activity log. Called after the task change is
+// saved; a failure here is logged rather than thrown, so a client never gets
+// an error for a change that actually succeeded.
+async function logTaskActivity(action, task, details) {
+  const info = `"${task.title}" (id: ${task.id})${details ? `; ${details}` : ''}`;
+
+  try {
+    await activityService.createActivity({ action, info });
+  } catch (error) {
+    console.error(`Failed to record "${action}" activity for task ${task.id}`, error);
+  }
+}
+
 async function getAllTasks() {
   return readJsonArray(TASKS_FILE_PATH);
 }
@@ -43,33 +57,44 @@ async function createTask(payload) {
     tasks.push(newTask);
   });
 
+  await logTaskActivity('task.created', newTask);
   return newTask;
 }
 
 async function updateTask(taskId, updates) {
-  return updateJsonArray(TASKS_FILE_PATH, (tasks) => {
+  const updatedTask = await updateJsonArray(TASKS_FILE_PATH, (tasks) => {
     const taskIndex = findTaskIndex(tasks, taskId);
-    const updatedTask = { ...tasks[taskIndex], updatedAt: new Date().toISOString() };
+    const task = { ...tasks[taskIndex], updatedAt: new Date().toISOString() };
 
     // Copy only the editable fields so a request can never overwrite id,
     // createdAt or add arbitrary keys.
     if (updates.title !== undefined) {
-      updatedTask.title = updates.title;
+      task.title = updates.title;
     }
     if (updates.completed !== undefined) {
-      updatedTask.completed = updates.completed;
+      task.completed = updates.completed;
     }
 
-    tasks[taskIndex] = updatedTask;
-    return updatedTask;
+    tasks[taskIndex] = task;
+    return task;
   });
+
+  const changed = Object.keys(updates)
+    .map((field) => `${field}: ${JSON.stringify(updates[field])}`)
+    .join(', ');
+  await logTaskActivity('task.updated', updatedTask, changed);
+
+  return updatedTask;
 }
 
 async function deleteTask(taskId) {
-  return updateJsonArray(TASKS_FILE_PATH, (tasks) => {
-    const [removedTask] = tasks.splice(findTaskIndex(tasks, taskId), 1);
-    return removedTask;
+  const removedTask = await updateJsonArray(TASKS_FILE_PATH, (tasks) => {
+    const [removed] = tasks.splice(findTaskIndex(tasks, taskId), 1);
+    return removed;
   });
+
+  await logTaskActivity('task.deleted', removedTask);
+  return removedTask;
 }
 
 module.exports = {

@@ -1,24 +1,7 @@
 const HttpError = require('../../../utils/httpError');
+const { assertJsonObject, assertOnlyFields } = require('../../../utils/validation');
 
 const ALLOWED_FIELDS = ['title', 'completed'];
-
-function validatePayloadShape(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new HttpError(400, 'Body must be a JSON object.');
-  }
-}
-
-function ensureNoUnknownFields(payload) {
-  const unknownFields = Object.keys(payload).filter(
-    (field) => !ALLOWED_FIELDS.includes(field)
-  );
-
-  if (unknownFields.length > 0) {
-    throw new HttpError(400, 'Body contains unsupported fields.', {
-      unsupportedFields: unknownFields,
-    });
-  }
-}
 
 function normalizeTitleIfPresent(payload, normalized) {
   if (!Object.hasOwn(payload, 'title')) {
@@ -50,8 +33,8 @@ function normalizeCompletedIfPresent(payload, normalized) {
 }
 
 function validateCreateTask(payload) {
-  validatePayloadShape(payload);
-  ensureNoUnknownFields(payload);
+  assertJsonObject(payload);
+  assertOnlyFields(payload, ALLOWED_FIELDS);
 
   const normalized = {};
   normalizeTitleIfPresent(payload, normalized);
@@ -69,8 +52,8 @@ function validateCreateTask(payload) {
 }
 
 function validateUpdateTask(payload) {
-  validatePayloadShape(payload);
-  ensureNoUnknownFields(payload);
+  assertJsonObject(payload);
+  assertOnlyFields(payload, ALLOWED_FIELDS);
 
   const normalized = {};
   normalizeTitleIfPresent(payload, normalized);

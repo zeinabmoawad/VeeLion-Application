@@ -1,22 +1,14 @@
 const HttpError = require('../../../utils/httpError');
+const { assertJsonObject, assertOnlyFields } = require('../../../utils/validation');
 
 const ALLOWED_FIELDS = ['action', 'info'];
 const MAX_ACTION_LENGTH = 100;
 const MAX_INFO_LENGTH = 1000;
+const SORT_ORDERS = ['asc', 'desc'];
 
 function validateCreateActivity(payload) {
-  if (!payload || typeof payload !== 'object' || Array.isArray(payload)) {
-    throw new HttpError(400, 'Body must be a JSON object.');
-  }
-
-  const unknownFields = Object.keys(payload).filter(
-    (field) => !ALLOWED_FIELDS.includes(field)
-  );
-  if (unknownFields.length > 0) {
-    throw new HttpError(400, 'Body contains unsupported fields.', {
-      unsupportedFields: unknownFields,
-    });
-  }
+  assertJsonObject(payload);
+  assertOnlyFields(payload, ALLOWED_FIELDS);
 
   if (typeof payload.action !== 'string' || !payload.action.trim()) {
     throw new HttpError(400, '"action" is required and must be a non-empty string.');
@@ -44,6 +36,20 @@ function validateCreateActivity(payload) {
   return normalized;
 }
 
+// Reads the optional `order` query parameter; defaults to oldest first.
+function parseSortOrder(order) {
+  if (order === undefined) {
+    return 'asc';
+  }
+
+  if (!SORT_ORDERS.includes(order)) {
+    throw new HttpError(400, '"order" must be "asc" or "desc".');
+  }
+
+  return order;
+}
+
 module.exports = {
   validateCreateActivity,
+  parseSortOrder,
 };

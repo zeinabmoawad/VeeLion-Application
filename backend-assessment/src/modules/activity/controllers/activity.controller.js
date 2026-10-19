@@ -1,45 +1,34 @@
-const aSvc = require('../services/activity.service');
-const { validateCreateActivity } = require('../utils/activityValidator');
+const activityService = require('../services/activity.service');
+const { validateCreateActivity, parseSortOrder } = require('../utils/activityValidator');
 const { parsePagination, paginate } = require('../../../utils/pagination');
-const HttpError = require('../../../utils/httpError');
 
-function parseOrder(order) {
-  if (order === undefined || order === 'asc' || order === 'desc') {
-    return order || 'asc';
-  }
-
-  throw new HttpError(400, '"order" must be "asc" or "desc".');
-}
-
-async function get_activity(req, res) {
-  const order = parseOrder(req.query.order);
+async function listActivity(req, res) {
+  const order = parseSortOrder(req.query.order);
   const pagination = parsePagination(req.query);
-  let x = await aSvc.getAllActivity();
+  let entries = await activityService.getAllActivity();
 
   // Entries are appended in time order, so reversing gives newest first.
   // slice() first: the array from the store is shared and must not be mutated.
   if (order === 'desc') {
-    x = x.slice().reverse();
+    entries = entries.slice().reverse();
   }
 
   if (!pagination) {
-    return res.json(x);
+    return res.status(200).json({ data: entries });
   }
 
-  // The bare-array response has no room for metadata, so the total goes in a
-  // header (the response shape is kept for existing clients).
-  const page = paginate(x, pagination);
+  const page = paginate(entries, pagination);
   res.set('X-Total-Count', String(page.meta.total));
-  return res.json(page.items);
+  return res.status(200).json({ data: page.items, meta: page.meta });
 }
 
-async function addActivity(req, res) {
+async function createActivity(req, res) {
   const payload = validateCreateActivity(req.body);
-  const made = await aSvc.createNewActivity(payload);
-  res.status(201).json(made);
+  const entry = await activityService.createActivity(payload);
+  res.status(201).json({ data: entry });
 }
 
 module.exports = {
-  get_activity,
-  addActivity,
+  listActivity,
+  createActivity,
 };

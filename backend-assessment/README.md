@@ -1,5 +1,57 @@
 # VeeLion Backend Assessment (Express.js)
 
+## Getting started
+
+Requires **Node.js 22+**.
+
+```bash
+npm install
+npm run seed     # copy sample data from data/seed/ into data/ (skips existing files)
+npm run dev      # start with auto-reload on http://localhost:3000
+```
+
+| Command | What it does |
+|---------|--------------|
+| `npm start` | Start the server |
+| `npm run dev` | Start with `node --watch` |
+| `npm run seed` | Copy sample data into `data/`; `npm run seed -- --force` overwrites |
+| `npm test` | Run the test suite (`node:test`, uses temporary data directories) |
+| `npm run lint` | Run ESLint |
+
+### Configuration
+
+All settings are optional environment variables.
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `PORT` | `3000` | HTTP port |
+| `DATA_DIR` | `./data` (next to `src/`) | Where `tasks.json` and `activity.json` are stored |
+| `API_KEY` | unset | When set, every request must send it in the `X-API-Key` header. Unset leaves the API open and logs a warning. |
+| `WRITE_RATE_LIMIT_PER_MINUTE` | `60` | Max POST/PATCH/DELETE requests per client IP per minute |
+| `TRUST_PROXY` | unset | Express `trust proxy` value. Set it to the number of proxy hops (e.g. `1`) behind a reverse proxy. |
+
+The JSON-file storage, write lock, read cache and rate limiter all assume **a single server process**.
+
+### API
+
+Successful responses use `{ "data": ... }`. Errors use `{ "error": { "message", "details?" } }`.
+
+| Method | Path | Notes |
+|--------|------|-------|
+| `GET` | `/tasks` | Optional `?limit=&offset=`, which adds `meta` and an `X-Total-Count` header |
+| `GET` | `/tasks/:id` | |
+| `POST` | `/tasks` | `{ "title": string, "completed"?: boolean }` |
+| `PATCH` | `/tasks/:id` | `{ "title"?: string, "completed"?: boolean }`, at least one field |
+| `DELETE` | `/tasks/:id` | `204` on success |
+| `GET` | `/activity` | Optional `?order=asc\|desc&limit=&offset=` |
+| `POST` | `/activity` | `{ "action": string (≤100), "info"?: string (≤1000) }` |
+
+Task changes are recorded automatically in the activity log as `task.created`, `task.updated` and `task.deleted`.
+
+See [REVIEW.md](REVIEW.md) for the code review behind these changes.
+
+---
+
 ## Overview
 
 You are given a partially implemented backend for a **Task Management System** built with Express.js.
